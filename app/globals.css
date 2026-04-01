@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-ocean: #0F172A;
+    --color-accent: #38BDF8;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-slate-800/60 backdrop-blur-md border border-slate-700/50 rounded-2xl;
+  }
+  .btn-primary {
+    @apply bg-sky-500 hover:bg-sky-400 active:bg-sky-600
+           text-white font-medium px-6 py-3 rounded-2xl
+           transition-all duration-200 disabled:opacity-40
+           disabled:cursor-not-allowed shadow-lg shadow-sky-500/20
+           hover:shadow-sky-500/30;
+  }
+  .btn-ghost {
+    @apply bg-slate-800/60 hover:bg-slate-700/60 active:bg-slate-900/60
+           text-slate-300 hover:text-white font-medium px-6 py-3 rounded-2xl
+           border border-slate-700/50 transition-all duration-200;
+  }
+  .input-field {
+    @apply w-full bg-slate-800/60 border border-slate-700/50 rounded-2xl
+           px-4 py-3 text-slate-100 placeholder-slate-500
+           focus:outline-none focus:border-sky-500/70 focus:bg-slate-800
+           transition-all duration-200;
+  }
+  .badge-easy   { @apply text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium; }
+  .badge-medium { @apply text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-medium; }
+  .badge-hard   { @apply text-xs px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 font-medium; }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent;
+  }
+
+  /* 思考点闪烁 */
+  .animate-blink {
+    animation: blink 1.2s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.2; }
+  }
+
+  /* 消息淡入上移 */
+  .animate-fade-in {
+    animation: fadeIn 0.25s ease-out both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 海龟浮动 */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+
+  /* 星星弹出 */
+  .animate-star-pop {
+    animation: starPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  @keyframes starPop {
+    from { opacity: 0; transform: scale(0.3) rotate(-15deg); }
+    to   { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+}
