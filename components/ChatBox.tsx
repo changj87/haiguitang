@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import MessageBubble from './MessageBubble'
@@ -119,7 +119,7 @@ export default function ChatBox({ sessionId, storyId, onCorrect, disabled }: Cha
           <div className="text-center text-slate-500 text-sm py-8">
             <p className="text-2xl mb-2">🐢</p>
             <p>提出你的第一个问题吧</p>
-            <p className="text-xs mt-1 text-slate-600">只能回答"是 / 否 / 无关"</p>
+            <p className="text-xs mt-1 text-slate-600">只能回答&ldquo;是 / 否 / 无关&rdquo;</p>
           </div>
         )}
 
@@ -207,3 +207,4 @@ export default function ChatBox({ sessionId, storyId, onCorrect, disabled }: Cha
     </div>
   )
 }
+

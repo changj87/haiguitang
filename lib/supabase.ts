@@ -51,11 +51,11 @@ export async function getStoryFull(id: string): Promise<Story> {
 }
 
 export async function incrementPlayCount(storyId: string) {
-  await supabaseAdmin
-    .from('stories')
-    .update({ play_count: supabaseAdmin.rpc('increment_play_count', { story_id: storyId }) })
-    .eq('id', storyId)
-    .catch(() => {})
+  try {
+    await supabaseAdmin.rpc('increment_play_count', { story_id: storyId })
+  } catch {
+    // 忽略错误
+  }
 }
 
 // ===== 游戏会话操作 =====
@@ -91,25 +91,6 @@ export async function updateSessionMessages(
     .update({
       messages,
       question_count: questionCount,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', sessionId)
-
-  if (error) throw error
-}
-
-export async function updateGameResult(
-  sessionId: string,
-  status: 'completed' | 'gave_up',
-  timeSpent: number,
-  stars: 1 | 2 | 3 | null
-) {
-  const { error } = await supabaseAdmin
-    .from('game_sessions')
-    .update({
-      status,
-      time_spent: timeSpent,
-      stars,
       updated_at: new Date().toISOString(),
     })
     .eq('id', sessionId)
