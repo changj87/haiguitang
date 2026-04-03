@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import GameCard from '@/components/GameCard'
+import AuthModal from '@/components/AuthModal'
+import { useAuth } from '@/components/AuthProvider'
 import type { StoryPublic } from '@/types'
 
 const CATEGORIES = ['全部', '经典', '悬疑', '日常', '烧脑']
 
 export default function HomePage() {
+  const { user, loading: authLoading, signOut } = useAuth()
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [stories, setStories] = useState<StoryPublic[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('全部')
@@ -25,8 +29,34 @@ export default function HomePage() {
 
   const totalPlays = stories.reduce((acc, s) => acc + s.play_count, 0)
 
+  const displayName = user?.user_metadata?.username || user?.email?.split('@')[0] || '玩家'
+
   return (
     <main className="max-w-md mx-auto px-4 py-8">
+      {/* 登录/用户栏 */}
+      <div className="flex justify-end mb-4 min-h-[32px]">
+        {!authLoading && (
+          user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">Hi, {displayName}</span>
+              <button
+                onClick={signOut}
+                className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                退出
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="px-3 py-1.5 rounded-full text-xs font-medium bg-sky-500/15 text-sky-400 border border-sky-500/30 hover:bg-sky-500/25 transition-colors"
+            >
+              登录 / 注册
+            </button>
+          )
+        )}
+      </div>
+
       {/* 顶部 Hero */}
       <header className="text-center mb-8">
         <div className="relative inline-block mb-4">
@@ -117,6 +147,8 @@ export default function HomePage() {
       <footer className="text-center mt-10 text-xs text-slate-700">
         <p>AI 主持 · 是 / 否 / 无关</p>
       </footer>
+
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </main>
   )
 }
