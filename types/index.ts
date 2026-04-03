@@ -88,6 +88,14 @@ export interface GameResult {
   questionCount: number
 }
 
+// ===== 用户 =====
+export interface UserProfile {
+  id: string           // 对应 Supabase auth.users.id
+  username: string
+  points: number
+  created_at: string
+}
+
 // ===== 工具类型 =====
 export interface ApiError {
   error: string

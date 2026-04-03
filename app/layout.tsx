@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { AuthProvider } from '@/components/AuthProvider'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -28,7 +29,9 @@ export default function RootLayout({
 
         {/* 页面内容 */}
         <div className="relative z-10">
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </div>
       </body>
     </html>
