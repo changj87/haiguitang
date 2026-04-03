@@ -1,67 +1,66 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getStoryFull, updateGameResult } from '@/lib/supabase'
+﻿import { NextRequest, NextResponse } from 'next/server'
+import { getStoryFull, completeSession } from '@/lib/supabase'
 import { buildJudgePrompt } from '@/lib/prompts'
-import type { JudgeRequest, JudgeResponse } from '@/types'
 
 export async function POST(req: NextRequest) {
   try {
-    const { storyId, playerAnswer, sessionId, timeSpent, questionCount }: JudgeRequest = await req.json()
+    const body = await req.json()
+    const { storyId, playerAnswer, sessionId, timeSpent } = body
 
-    if (!storyId || !playerAnswer || !sessionId) {
-      return NextResponse.json({ error: '缺少必要参数' }, { status: 400 })
+    if (!storyId || !playerAnswer?.trim()) {
+      return NextResponse.json({ error: '参数缺失' }, { status: 400 })
+    }
+    if (playerAnswer.trim().length > 500) {
+      return NextResponse.json({ error: '答案不能超过500字' }, { status: 400 })
     }
 
-    // 1. 获取完整故事信息
     const story = await getStoryFull(storyId)
-    if (!story) {
-      return NextResponse.json({ error: '故事不存在' }, { status: 404 })
-    }
+    const judgePrompt = buildJudgePrompt(story.bottom, story.key_points, playerAnswer.trim())
 
-    // 2. 调用 AI 进行判断
-    const judgePrompt = buildJudgePrompt(story.bottom, story.key_points, playerAnswer)
-    
-    const response = await fetch(`${process.env.DEEPSEEK_BASE_URL}/chat/completions`, {
+    const aiRes = await fetch(`${process.env.DEEPSEEK_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
-        messages: [{ role: 'system', content: judgePrompt }],
+        messages: [{ role: 'user', content: judgePrompt }],
+        max_tokens: 200,
         temperature: 0.1,
-        response_format: { type: 'json_object' }
-      })
+      }),
     })
 
-    if (!response.ok) {
-      throw new Error('AI 服务响应错误')
+    if (!aiRes.ok) {
+      return NextResponse.json({ error: 'AI 服务暂时不可用' }, { status: 502 })
     }
 
-    const data = await response.json()
-    const content = data.choices[0].message.content
-    const judgeResult: JudgeResponse = JSON.parse(content)
+    const aiData = await aiRes.json()
+    const rawText = aiData.choices?.[0]?.message?.content?.trim() ?? '{}'
 
-    // 3. 根据结果计算星级
+    let judgeResult: { correct: boolean; coverage: number; missing: string[] }
+    try {
+      const cleaned = rawText.replace(/```json|```/g, '').trim()
+      judgeResult = JSON.parse(cleaned)
+    } catch {
+      judgeResult = { correct: false, coverage: 0, missing: story.key_points }
+    }
+
     let stars: 1 | 2 | 3 | null = null
-    if (judgeResult.correct) {
-      if (timeSpent < 120 && questionCount < 10) {
-        stars = 3
-      } else if (timeSpent < 300 && questionCount < 20) {
-        stars = 2
-      } else {
-        stars = 1
-      }
+    if (judgeResult.correct && sessionId) {
+      stars = judgeResult.coverage >= 95 ? 3 : judgeResult.coverage >= 80 ? 2 : 1
+      const t = typeof timeSpent === 'number' ? timeSpent : 0
+      await completeSession(sessionId, t, stars)
     }
 
-    // 4. 更新数据库中的游戏会话状态
-    await updateGameResult(sessionId, judgeResult.correct ? 'completed' : 'gave_up', timeSpent, stars)
-
-    return NextResponse.json({ ...judgeResult, stars })
-
+    return NextResponse.json({
+      correct: judgeResult.correct,
+      coverage: judgeResult.coverage,
+      missing: judgeResult.missing ?? [],
+      stars,
+    })
   } catch (error) {
-    console.error('Judge API Error:', error)
-    const message = error instanceof Error ? error.message : 'Internal Server Error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('Judge API 错误:', error)
+    return NextResponse.json({ error: '服务器内部错误' }, { status: 500 })
   }
 }
